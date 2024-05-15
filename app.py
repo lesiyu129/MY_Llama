@@ -1,7 +1,9 @@
 from unsloth import FastLanguageModel
 import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, QuantoConfig
+
 max_seq_length = 2048 # Choose any! We auto support RoPE Scaling internally!
-dtype = torch.bfloat16 # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
+dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
 load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
 
 # 4bit pre quantized models we support for 4x faster downloading + no OOMs.
@@ -132,14 +134,20 @@ if True:
     tokenizer.batch_decode(outputs)
 
     # 保存模型
-    model.save_pretrained("lora_model") # Local saving
+    model.save_pretrained("lora_model",tokenizer,quantization_method = "quantized",save_method = "merged_4bit") # Local saving
     tokenizer.save_pretrained("lora_model")
+    # 量化（减少模型暂用资源）
+    if True:
+        tokenizer = AutoTokenizer.from_pretrained('lora_model')
+        quantization_config = QuantoConfig(weights="int8")
+        quantized_model = AutoModelForCausalLM.from_pretrained('lora_model', device_map="cuda:0", quantization_config=quantization_config)
+        quantized_model.save_pretrained('lora_model')
 
 if True:
 
     from unsloth import FastLanguageModel
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name = "lora_model", # YOUR MODEL YOU USED FOR TRAINING
+        model_name = 'lora_model', # YOUR MODEL YOU USED FOR TRAINING
         max_seq_length = max_seq_length,
         dtype = dtype,
         load_in_4bit = load_in_4bit,
@@ -158,6 +166,6 @@ inputs = tokenizer(
 ], return_tensors = "pt").to("cuda")
 
 outputs = model.generate(**inputs, max_new_tokens = 64, use_cache = True)
-tokenizer.batch_decode(outputs)
-
+outstr = tokenizer.batch_decode(outputs)
+print(outstr)
 
