@@ -91,8 +91,6 @@ trainer = SFTTrainer(
 )
 
 trainer_stats = trainer.train()
-# model.save_pretrained("mode1", tokenizer, quantization_method = "f16")
-# tokenizer.save_pretrained("mode1")
+model.save_pretrained_gguf("mode1", tokenizer, quantization_method = "f16")
 # model.save_pretrained_gguf("mode1", tokenizer, quantization_method = "q4_k_m")
 # model.save_pretrained_gguf("mode1", tokenizer, quantization_method = "q8_0")
-# model.save_pretrained_gguf("mode1", tokenizer, quantization_method = "f16")
