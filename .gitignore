@@ -160,4 +160,6 @@ cython_debug/
 #.idea/
 lora_model
 outputs
-llama.cpp
+.llama.cpp/
+_unsloth_temporary_saved_buffers
+model_save
