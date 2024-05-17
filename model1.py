@@ -3,7 +3,7 @@ from trl import SFTTrainer
 from transformers import TrainingArguments, AutoModelForCausalLM, AutoTokenizer, QuantoConfig
 #模型下载
 from modelscope import snapshot_download
-model_dir = snapshot_download('LLM-Research/Meta-Llama-3-70B-Instruct')
+model_dir = snapshot_download('LLM-Research/Meta-Llama-3-70B-Instruct',cache_dir='/app/lesiyu_file')
 import torch
 
 # 数据集地址
