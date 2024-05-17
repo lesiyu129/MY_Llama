@@ -1,23 +1,29 @@
 from unsloth import FastLanguageModel
 from trl import SFTTrainer
 from transformers import TrainingArguments, AutoModelForCausalLM, AutoTokenizer, QuantoConfig
-
+#模型下载
+from modelscope import snapshot_download
+model_dir = snapshot_download('LLM-Research/Meta-Llama-3-70B-Instruct')
 import torch
 
 # 数据集地址
 file_path = "./data/alpaca_gpt4_data_zh.json"
 
 max_seq_length = 2048 # Choose any! We auto support RoPE Scaling internally!
-dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
+dtype =torch.bfloat16 # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
+load_in_4bit = True # Use 4bit quantizatiopretrained_model_name_or_path=n to reduce memory usage. Can be False.
 
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = "unsloth/llama-3-8b-bnb-4bit",
-    max_seq_length = max_seq_length,
-    dtype = dtype,
-    load_in_4bit = load_in_4bit,
-    # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
-)
+tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name_or_path=model_dir)
+quantization_config = QuantoConfig(weights="int8")
+model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path=model_dir, device_map="cuda:0", quantization_config=quantization_config)
+
+# model, tokenizer = FastLanguageModel.from_pretrained(
+#     model_name = "meta-llama/Meta-Llama-3-70B-Instruct",
+#     max_seq_length = max_seq_length,
+#     dtype = dtype,
+#     load_in_4bit = load_in_4bit,
+#     # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
+# )
 
 model = FastLanguageModel.get_peft_model(
     model,
@@ -91,6 +97,7 @@ trainer = SFTTrainer(
 )
 
 trainer_stats = trainer.train()
-model.save_pretrained_gguf("mode1", tokenizer, quantization_method = "f16")
+model.save_pretrained("model_save/mode1", tokenizer, quantization_method = "q4_k_m")
+# model.save_pretrained_gguf("mode1", tokenizer, quantization_method = "f16")
 # model.save_pretrained_gguf("mode1", tokenizer, quantization_method = "q4_k_m")
 # model.save_pretrained_gguf("mode1", tokenizer, quantization_method = "q8_0")
